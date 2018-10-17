@@ -16,6 +16,11 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+DartConfiguration.tcl
+
+# Output files
+*.a
+cudademo_test
 
 # Temporary and large files
 tmp/
