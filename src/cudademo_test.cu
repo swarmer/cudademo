@@ -30,6 +30,8 @@ int main(int argc, char *argv[]) {
 
     vector_add<<<1, VECTOR_SIZE>>>(a, b, out, VECTOR_SIZE);
 
+    cudaDeviceSynchronize();
+
     for (size_t i = 0; i < VECTOR_SIZE; ++i) {
         printf("out[%zd]: %d\n", i, out[i]);
     }
