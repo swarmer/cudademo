@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-project(cmake_and_cuda LANGUAGES CXX CUDA)
+project(cudademo LANGUAGES CXX CUDA)
 
 include(CTest)
 
@@ -27,12 +27,15 @@ set_target_properties(
 
 # executable target
 ###################
+find_package(SDL2 REQUIRED)
+include_directories(nbody ${SDL2_INCLUDE_DIRS})
+
 add_executable(nbody src/nbody.cpp)
 set_property(
     TARGET nbody
     PROPERTY CUDA_SEPARABLE_COMPILATION ON
 )
-target_link_libraries(nbody PRIVATE nbodycuda)
+target_link_libraries(nbody PRIVATE nbodycuda ${SDL2_LIBRARIES})
 
 if(APPLE)
   # We need to add the path to the driver (libcuda.dylib) as an rpath,

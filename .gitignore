@@ -1,3 +1,6 @@
+# IDEs, editors, etc
+.vscode/
+
 # CUDA
 *.i
 *.ii
