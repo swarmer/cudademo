@@ -21,6 +21,7 @@ DartConfiguration.tcl
 # Output files
 *.a
 cudademo_test
+nbody
 
 # Temporary and large files
 tmp/
