@@ -26,6 +26,9 @@ public:
     NBodyRenderer(NBodyRenderer&&) = default;
     NBodyRenderer& operator=(NBodyRenderer&&) = default;
 
+    void update_software();
+    void update_cuda();
+
     void update();
 
     int width();

@@ -49,7 +49,7 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
     particles = particle_generator.get_particles();
 }
 
-void NBodyRenderer::update()
+void NBodyRenderer::update_software()
 {
     // TODO: update particle positions
 
@@ -73,7 +73,22 @@ void NBodyRenderer::update()
             framebuf[coords2d_to_1d(m_width, pixel_x, pixel_y)] = pixel;
         }
     }
+}
 
+void NBodyRenderer::update_cuda()
+{
+    // TODO
+}
+
+//#define UPDATE_CUDA
+
+void NBodyRenderer::update()
+{
+#ifdef UPDATE_CUDA
+    update_cuda();
+#else
+    update_software();
+#endif
 }
 
 int NBodyRenderer::width() { return m_width; }
