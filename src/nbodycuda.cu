@@ -20,6 +20,10 @@ constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 
 constexpr inline float particle_render_kernel(float x1, float y1, float x2, float y2)
 {
+    constexpr float max_l1 = 100;
+    if (abs(x1 - x2) > max_l1 || abs(y1 - y2) > max_l1)
+        return 0.0f;
+
     constexpr float max_value = 250;
     float distance = std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2));
     float value = 1 / std::pow(distance, 1.3) * max_value;
