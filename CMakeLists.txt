@@ -14,7 +14,7 @@ add_library(nbodycuda STATIC
 # Request that nbodycuda be built with -std=c++11
 # As this is a public compile feature anything that links to
 # nbodycuda will also build with -std=c++11
-target_compile_features(nbodycuda PUBLIC cxx_std_11)
+target_compile_features(nbodycuda PUBLIC cxx_std_17)
 
 # We need to explicitly state that we need all CUDA files in the
 # nbodycuda library to be built with -dc as the member functions
