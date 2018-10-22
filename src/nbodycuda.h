@@ -13,7 +13,7 @@ using std::tuple;
 
 
 // Comment to disable CUDA acceleration
-// #define USE_CUDA
+#define USE_CUDA
 
 
 class NBodyRenderer {

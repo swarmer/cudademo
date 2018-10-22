@@ -49,7 +49,9 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
     vector<tuple<float, float>> particles = particle_generator.get_particles();
 
 #ifdef USE_CUDA
-    // TODO
+    cudaMallocManaged(&frame_buffer, m_width * m_height * sizeof(uint32_t));
+    cudaMallocManaged(&particle_x_arr, particles.size() * sizeof(float));
+    cudaMallocManaged(&particly_y_arr, particles.size() * sizeof(float));
 #else
     frame_buffer = (uint32_t*)malloc(m_width * m_height * sizeof(uint32_t));
     particle_x_arr = (float*)malloc(particles.size() * sizeof(float));
