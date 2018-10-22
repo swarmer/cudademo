@@ -1,4 +1,6 @@
+#include <chrono>
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -50,6 +52,8 @@ public:
                 }
             }
 
+            auto t0 = std::chrono::system_clock::now();
+
             // run and render a simulation step
             nbody_renderer->update();
 
@@ -61,6 +65,10 @@ public:
             SDL_RenderClear(sdl_renderer);
             SDL_RenderCopy(sdl_renderer, sdl_texture, NULL, NULL);
             SDL_RenderPresent(sdl_renderer);
+
+            auto t1 = std::chrono::system_clock::now();
+            std::chrono::duration<double> dt = t1 - t0;
+            std::cout << "Frame update took " << dt.count() << "s\n";
         }
     }
 
