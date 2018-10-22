@@ -1,22 +1,23 @@
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 #include <SDL.h>
 
 using std::unique_ptr;
+using std::vector;
 
 
 class NBodyRenderer {
-    const int m_width, m_height;
+    const size_t m_width, m_height;
 
-    uint32_t *pixels;
+    vector<uint32_t> framebuf;
 
 public:
-    NBodyRenderer(int width = 640, int height = 480)
-        : m_width{width}, m_height{height}
+    NBodyRenderer(size_t width = 1400, size_t height = 800)
+        : m_width{width}, m_height{height}, framebuf((unsigned int)(width * height))
     {
-        pixels = new uint32_t[width * height];
-        memset(pixels, 0, width * height * sizeof(uint32_t));
+        // TODO
     }
 
     NBodyRenderer(const NBodyRenderer&) = delete;
@@ -24,17 +25,14 @@ public:
     NBodyRenderer(NBodyRenderer&&) = default;
     NBodyRenderer& operator=(NBodyRenderer&&) = default;
 
-    void update() {
+    void update()
+    {
         // TODO
     }
 
     int width() { return m_width; }
     int height() { return m_height; }
-    const uint32_t* get_buffer() { return pixels; }
-
-    ~NBodyRenderer() {
-        delete[] pixels;
-    }
+    const vector<uint32_t>& get_buffer() { return framebuf; }
 };
 
 
@@ -66,14 +64,16 @@ public:
     NBodySDLWindow(NBodySDLWindow&&) = default;
     NBodySDLWindow& operator=(NBodySDLWindow&&) = default;
 
-    void run_event_loop() {
+    void run_event_loop()
+    {
         while (true)
         {
             // handle exit events
             SDL_Event event;
-            SDL_WaitEvent(&event);
-            if (event.type == SDL_QUIT) {
-                break;
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) {
+                    return;
+                }
             }
 
             // run and render a simulation step
@@ -81,7 +81,7 @@ public:
 
             // draw a newly rendered frame
             SDL_UpdateTexture(
-                sdl_texture, NULL, nbody_renderer->get_buffer(),
+                sdl_texture, NULL, nbody_renderer->get_buffer().data(),
                 nbody_renderer->width() * sizeof(uint32_t)
             );
             SDL_RenderClear(sdl_renderer);
@@ -90,7 +90,8 @@ public:
         }
     }
 
-    ~NBodySDLWindow() {
+    ~NBodySDLWindow()
+    {
         SDL_DestroyTexture(sdl_texture);
         SDL_DestroyRenderer(sdl_renderer);
         SDL_DestroyWindow(sdl_window);
@@ -99,7 +100,8 @@ public:
 };
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     NBodySDLWindow nbody_window{std::make_unique<NBodyRenderer>()};
     nbody_window.run_event_loop();
     return 0;
