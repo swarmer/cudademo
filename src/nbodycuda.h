@@ -4,14 +4,19 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <tuple>
+
+#include "nbodyparticles.h"
 
 using std::vector;
+using std::tuple;
 
 
 class NBodyRenderer {
     const size_t m_width, m_height;
 
     vector<uint32_t> framebuf;
+    vector<tuple<float, float>> particles;
 
 public:
     NBodyRenderer(size_t width = 1400, size_t height = 800);

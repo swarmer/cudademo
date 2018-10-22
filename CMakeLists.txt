@@ -9,6 +9,8 @@ include(CTest)
 add_library(nbodycuda STATIC
   src/nbodycuda.cu
   src/nbodycuda.h
+  src/nbodyparticles.cpp
+  src/nbodyparticles.h
 )
 
 # Request that nbodycuda be built with -std=c++14

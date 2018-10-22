@@ -1,29 +1,36 @@
 #include "nbodycuda.h"
 
+using std::tie;
+
+
+constexpr inline size_t coords2d_to_1d(size_t row_size, size_t x, size_t y)
+{
+    return row_size * y + x;
+}
+
 
 NBodyRenderer::NBodyRenderer(size_t width, size_t height)
     : m_width{width}, m_height{height}, framebuf((unsigned int)(width * height))
 {
-    // TODO
+    auto particle_generator = UniformRandomParticleGenerator{
+        0.0f, (float)width,
+        0.0f, (float)height,
+        3000u,
+    };
+
+    particles = particle_generator.get_particles();
 }
 
 void NBodyRenderer::update()
 {
-    static long step_r = 0;
-    static long step_g = 64;
-    static long step_b = 128;
+    // TODO: update particle positions
 
-    uint32_t color = (
-        ((step_r % 255) << 16)
-        | ((step_g % 255) << 8)
-        | (step_b % 255)
-    );
+    for (auto &coords: particles) {
+        float x, y;
+        tie(x, y) = coords;
 
-    framebuf.assign(buffer_size(), color);
-
-    ++step_r;
-    ++step_g;
-    ++step_b;
+        framebuf[coords2d_to_1d(m_width, (size_t)x, (size_t)y)] = 0x00FFFFFF;
+    }
 }
 
 int NBodyRenderer::width() { return m_width; }
