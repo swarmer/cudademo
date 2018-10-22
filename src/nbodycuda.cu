@@ -55,8 +55,6 @@ void NBodyRenderer::update()
 
     for (size_t pixel_x = 0; pixel_x < m_width; ++pixel_x) {
         for (size_t pixel_y = 0; pixel_y < m_height; ++pixel_y) {
-
-
             float brightness = 0;
 
             for (auto &coords: particles) {
