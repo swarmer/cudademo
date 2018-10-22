@@ -12,11 +12,17 @@ using std::vector;
 using std::tuple;
 
 
+// Comment to disable CUDA acceleration
+// #define USE_CUDA
+
+
 class NBodyRenderer {
     const size_t m_width, m_height;
 
-    vector<uint32_t> framebuf;
-    vector<tuple<float, float>> particles;
+    uint32_t* frame_buffer = nullptr;
+    size_t particle_count = 0;
+    float* particle_x_arr = nullptr;
+    float* particly_y_arr = nullptr;
 
 public:
     NBodyRenderer(size_t width = 1400, size_t height = 800);
@@ -26,6 +32,8 @@ public:
     NBodyRenderer(NBodyRenderer&&) = default;
     NBodyRenderer& operator=(NBodyRenderer&&) = default;
 
+    virtual ~NBodyRenderer();
+
     void update_software();
     void update_cuda();
 
@@ -34,7 +42,7 @@ public:
     int width();
     int height();
     size_t buffer_size() const;
-    const vector<uint32_t>& get_buffer();
+    const uint32_t* get_buffer();
 };
 
 #endif

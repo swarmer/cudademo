@@ -59,7 +59,7 @@ public:
 
             // draw a newly rendered frame
             SDL_UpdateTexture(
-                sdl_texture, NULL, nbody_renderer->get_buffer().data(),
+                sdl_texture, NULL, nbody_renderer->get_buffer(),
                 nbody_renderer->width() * sizeof(uint32_t)
             );
             SDL_RenderClear(sdl_renderer);

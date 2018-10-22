@@ -38,7 +38,7 @@ constexpr inline size_t coords2d_to_1d(size_t row_size, size_t x, size_t y)
 
 
 NBodyRenderer::NBodyRenderer(size_t width, size_t height)
-    : m_width{width}, m_height{height}, framebuf((unsigned int)(width * height))
+    : m_width{width}, m_height{height}
 {
     auto particle_generator = UniformRandomParticleGenerator{
         0.0f, (float)width,
@@ -46,7 +46,37 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
         300u,
     };
 
-    particles = particle_generator.get_particles();
+    vector<tuple<float, float>> particles = particle_generator.get_particles();
+
+#ifdef USE_CUDA
+    // TODO
+#else
+    frame_buffer = (uint32_t*)malloc(m_width * m_height * sizeof(uint32_t));
+    particle_x_arr = (float*)malloc(particles.size() * sizeof(float));
+    particly_y_arr = (float*)malloc(particles.size() * sizeof(float));
+#endif
+
+    particle_count = particles.size();
+    for (size_t i = 0; i < particle_count; ++i) {
+        float x, y;
+        tie(x, y) = particles[i];
+
+        particle_x_arr[i] = x;
+        particly_y_arr[i] = y;
+    }
+}
+
+NBodyRenderer::~NBodyRenderer()
+{
+#ifdef USE_CUDA
+    cudaFree(frame_buffer);
+    cudaFree(particle_x_arr);
+    cudaFree(particly_y_arr);
+#else
+    free(frame_buffer);
+    free(particle_x_arr);
+    free(particly_y_arr);
+#endif
 }
 
 void NBodyRenderer::update_software()
@@ -57,9 +87,9 @@ void NBodyRenderer::update_software()
         for (size_t pixel_y = 0; pixel_y < m_height; ++pixel_y) {
             float brightness = 0;
 
-            for (auto &coords: particles) {
-                float x, y;
-                tie(x, y) = coords;
+            for (size_t i = 0; i < particle_count; ++i) {
+                float x = particle_x_arr[i];
+                float y = particly_y_arr[i];
 
                 brightness += particle_render_kernel(pixel_x, pixel_y, x, y);
             }
@@ -70,7 +100,7 @@ void NBodyRenderer::update_software()
                 | (channel << 8)
                 | channel
             );
-            framebuf[coords2d_to_1d(m_width, pixel_x, pixel_y)] = pixel;
+            frame_buffer[coords2d_to_1d(m_width, pixel_x, pixel_y)] = pixel;
         }
     }
 }
@@ -80,11 +110,9 @@ void NBodyRenderer::update_cuda()
     // TODO
 }
 
-//#define UPDATE_CUDA
-
 void NBodyRenderer::update()
 {
-#ifdef UPDATE_CUDA
+#ifdef USE_CUDA
     update_cuda();
 #else
     update_software();
@@ -94,4 +122,4 @@ void NBodyRenderer::update()
 int NBodyRenderer::width() { return m_width; }
 int NBodyRenderer::height() { return m_height; }
 size_t NBodyRenderer::buffer_size() const { return m_width * m_height; }
-const vector<uint32_t>& NBodyRenderer::get_buffer() { return framebuf; }
+const uint32_t* NBodyRenderer::get_buffer() { return frame_buffer; }
