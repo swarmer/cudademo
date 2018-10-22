@@ -27,11 +27,26 @@ public:
 
     void update()
     {
-        // TODO
+        static long step_r = 0;
+        static long step_g = 64;
+        static long step_b = 128;
+
+        uint32_t color = (
+            ((step_r % 255) << 16)
+            | ((step_g % 255) << 8)
+            | (step_b % 255)
+        );
+
+        framebuf.assign(buffer_size(), color);
+
+        ++step_r;
+        ++step_g;
+        ++step_b;
     }
 
     int width() { return m_width; }
     int height() { return m_height; }
+    size_t buffer_size() const { return m_width * m_height; }
     const vector<uint32_t>& get_buffer() { return framebuf; }
 };
 
