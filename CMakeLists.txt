@@ -11,9 +11,9 @@ add_library(nbodycuda STATIC
   src/nbodycuda.h
 )
 
-# Request that nbodycuda be built with -std=c++11
+# Request that nbodycuda be built with -std=c++14
 # As this is a public compile feature anything that links to
-# nbodycuda will also build with -std=c++11
+# nbodycuda will also build with -std=c++14
 target_compile_features(nbodycuda PUBLIC cxx_std_14)
 
 # We need to explicitly state that we need all CUDA files in the
@@ -28,7 +28,7 @@ set_target_properties(
 # executable target
 ###################
 find_package(SDL2 REQUIRED)
-include_directories(nbody ${SDL2_INCLUDE_DIRS})
+include_directories(${SDL2_INCLUDE_DIRS})
 
 add_executable(nbody src/nbody.cpp)
 set_property(
