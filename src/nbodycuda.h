@@ -22,7 +22,7 @@ class NBodyRenderer {
     uint32_t* frame_buffer = nullptr;
     size_t particle_count = 0;
     float* particle_x_arr = nullptr;
-    float* particly_y_arr = nullptr;
+    float* particle_y_arr = nullptr;
 
 public:
     NBodyRenderer(size_t width = 1400, size_t height = 800);
