@@ -26,14 +26,10 @@ __device__ __host__ constexpr float particle_render_kernel(
     float x1, float y1, float x2, float y2
 )
 {
-    constexpr float max_l1 = 50;
-    if (abs(x1 - x2) > max_l1 || abs(y1 - y2) > max_l1)
-        return 0.0f;
-
     constexpr float max_value = 250;
     float distance = std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2));
-    float value = 1 / std::pow(distance, 1.3) * max_value;
-    return clamp(value, 0.0f, max_value);
+    float value = 1 / std::pow(distance, 1.7) * max_value;
+    return value;
 }
 
 
@@ -134,8 +130,8 @@ __global__ void cuda_render(
     constexpr ssize_t window_size = 9;
     for (ssize_t shift_x = -4; shift_x <= 4; ++shift_x) {
         for (ssize_t shift_y = -4; shift_y <= 4; ++shift_y) {
-            ssize_t pixel_x = center_pixel_x + (window_size * threadIdx.x) + shift_x;
-            ssize_t pixel_y = center_pixel_y + (window_size * threadIdx.y) + shift_y;
+            ssize_t pixel_x = center_pixel_x + (window_size * ((ssize_t)threadIdx.x - 2)) + shift_x;
+            ssize_t pixel_y = center_pixel_y + (window_size * ((ssize_t)threadIdx.y - 2)) + shift_y;
 
             if (pixel_x < 0 || pixel_x >= width || pixel_y < 0 || pixel_y >= height) {
                 // pixel out of bounds
