@@ -23,6 +23,8 @@ class NBodyRenderer {
     size_t particle_count = 0;
     float* particle_x_arr = nullptr;
     float* particle_y_arr = nullptr;
+    float* particle_x_speed = nullptr;
+    float* particle_y_speed = nullptr;
 
 public:
     NBodyRenderer(size_t width = 1400, size_t height = 800);

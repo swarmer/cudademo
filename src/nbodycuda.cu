@@ -45,7 +45,7 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
     auto particle_generator = UniformRandomParticleGenerator{
         0.0f, (float)width,
         0.0f, (float)height,
-        300u,
+        3000u,
     };
 
     vector<tuple<float, float>> particles = particle_generator.get_particles();
@@ -54,10 +54,14 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
     cudaMallocManaged(&frame_buffer, m_width * m_height * sizeof(uint32_t));
     cudaMallocManaged(&particle_x_arr, particles.size() * sizeof(float));
     cudaMallocManaged(&particle_y_arr, particles.size() * sizeof(float));
+    cudaMallocManaged(&particle_x_speed, particles.size() * sizeof(float));
+    cudaMallocManaged(&particle_y_speed, particles.size() * sizeof(float));
 #else
     frame_buffer = (uint32_t*)malloc(m_width * m_height * sizeof(uint32_t));
     particle_x_arr = (float*)malloc(particles.size() * sizeof(float));
     particle_y_arr = (float*)malloc(particles.size() * sizeof(float));
+    particle_x_speed = (float*)malloc(particles.size() * sizeof(float));
+    particle_y_speed = (float*)malloc(particles.size() * sizeof(float));
 #endif
 
     particle_count = particles.size();
@@ -67,6 +71,8 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
 
         particle_x_arr[i] = x;
         particle_y_arr[i] = y;
+        particle_x_speed[i] = 0;
+        particle_y_speed[i] = 0;
     }
 }
 
@@ -76,10 +82,14 @@ NBodyRenderer::~NBodyRenderer()
     cudaFree(frame_buffer);
     cudaFree(particle_x_arr);
     cudaFree(particle_y_arr);
+    cudaFree(particle_x_speed);
+    cudaFree(particle_y_speed);
 #else
     free(frame_buffer);
     free(particle_x_arr);
     free(particle_y_arr);
+    free(particle_x_speed);
+    free(particle_y_speed);
 #endif
 }
 
@@ -160,13 +170,84 @@ __global__ void cuda_render(
     }
 }
 
+__global__ void cuda_accelerate(
+    float particle_x_arr[],
+    float particle_y_arr[],
+    float particle_x_speed[],
+    float particle_y_speed[],
+    size_t particle_count
+)
+{
+    // target is one being accelerated, source is one applying force
+    const size_t particle_target = blockIdx.x * 10 + threadIdx.x;
+    const size_t particle_source = blockIdx.y * 10 + threadIdx.y;
+    if (particle_target >= particle_count || particle_source >= particle_count)
+        return;
+    if (particle_target == particle_source)
+        return;
+
+    float targetx = particle_x_arr[particle_target];
+    float targety = particle_y_arr[particle_target];
+    float sourcex = particle_x_arr[particle_source];
+    float sourcey = particle_y_arr[particle_source];
+
+    constexpr float g = 0.001;
+    constexpr float maxaccel = 0.001;
+    float accelx = 1 / (sourcex - targetx) * g;
+    float accely = 1 / (sourcey - targety) * g;
+    accelx = clamp(accelx, -maxaccel, maxaccel);
+    accely = clamp(accely, -maxaccel, maxaccel);
+
+    atomicAdd(&particle_x_speed[particle_target], accelx);
+    atomicAdd(&particle_y_speed[particle_target], accely);
+}
+
+__global__ void cuda_move(
+    float particle_x_arr[],
+    float particle_y_arr[],
+    float particle_x_speed[],
+    float particle_y_speed[],
+    size_t particle_count
+)
+{
+    const size_t particle_index = blockIdx.x * 100 + threadIdx.x;
+    if (particle_index >= particle_count)
+        return;
+
+    float speedx = particle_x_speed[particle_index];
+    float speedy = particle_y_speed[particle_index];
+
+    atomicAdd(&particle_x_arr[particle_index], speedx);
+    atomicAdd(&particle_y_arr[particle_index], speedy);
+}
+
 void NBodyRenderer::update_cuda()
 {
+    // clear the frame
     cudaMemset(frame_buffer, 0, m_width * m_height * sizeof(uint32_t));
 
-    dim3 threads_per_block(5, 5, 10);  // 10 particles x 5 column blocks x 5 rows blocks
-    dim3 blocks_count(ceil(particle_count / 10), 1, 1);
-    cuda_render<<<blocks_count, threads_per_block>>>(
+    // accelerate particles
+    dim3 athreads_per_block(10, 10, 1);  // 10 particles x 10 particles
+    dim3 ablocks_count(ceil(particle_count / 10), ceil(particle_count / 10), 1);
+    cuda_accelerate<<<ablocks_count, athreads_per_block>>>(
+        particle_x_arr, particle_y_arr,
+        particle_x_speed, particle_y_speed,
+        particle_count
+    );
+
+    // move particles
+    dim3 mthreads_per_block(100, 1, 1);
+    dim3 mblocks_count(ceil(particle_count / 100), 1, 1);
+    cuda_move<<<mblocks_count, mthreads_per_block>>>(
+        particle_x_arr, particle_y_arr,
+        particle_x_speed, particle_y_speed,
+        particle_count
+    );
+
+    // render particles
+    dim3 rthreads_per_block(5, 5, 10);  // 10 particles x 5 column blocks x 5 rows blocks
+    dim3 rblocks_count(ceil(particle_count / 10), 1, 1);
+    cuda_render<<<rblocks_count, rthreads_per_block>>>(
         frame_buffer, m_width, m_height,
         particle_x_arr, particle_y_arr, particle_count
     );
