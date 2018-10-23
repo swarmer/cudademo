@@ -48,7 +48,7 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
         3000u,
     };
 
-    vector<tuple<float, float>> particles = particle_generator.get_particles();
+    vector<tuple<float, float, float, float>> particles = particle_generator.get_particles();
 
 #ifdef USE_CUDA
     cudaMallocManaged(&frame_buffer, m_width * m_height * sizeof(uint32_t));
@@ -66,13 +66,10 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
 
     particle_count = particles.size();
     for (size_t i = 0; i < particle_count; ++i) {
-        float x, y;
-        tie(x, y) = particles[i];
-
-        particle_x_arr[i] = x;
-        particle_y_arr[i] = y;
-        particle_x_speed[i] = 0;
-        particle_y_speed[i] = 0;
+        particle_x_arr[i] = std::get<0>(particles[i]);
+        particle_y_arr[i] = std::get<1>(particles[i]);
+        particle_x_speed[i] = std::get<2>(particles[i]);
+        particle_y_speed[i] = std::get<3>(particles[i]);
     }
 }
 

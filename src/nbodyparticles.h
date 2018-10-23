@@ -10,14 +10,14 @@ using std::tuple;
 
 
 struct ParticleGenerator {
-    virtual vector<tuple<float, float>> get_particles() const = 0;
+    virtual vector<tuple<float, float, float, float>> get_particles() const = 0;
 };
 
 
 struct CompositeParticleGenerator : public ParticleGenerator {
     vector<ParticleGenerator*> subgenerators;
 
-    vector<tuple<float, float>> get_particles() const override;
+    vector<tuple<float, float, float, float>> get_particles() const override;
 };
 
 
@@ -33,7 +33,7 @@ struct UniformRandomParticleGenerator : public ParticleGenerator {
     ) : x_from(x_from_), x_to(x_to_), y_from(y_from_), y_to(y_to_), count(count_)
     {}
 
-    vector<tuple<float, float>> get_particles() const override;
+    vector<tuple<float, float, float, float>> get_particles() const override;
 };
 
 #endif
