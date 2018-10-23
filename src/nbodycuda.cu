@@ -145,7 +145,17 @@ __global__ void cuda_render(
                 | (dchannel << 8)
                 | dchannel
             );
-            frame_buffer[coords2d_to_1d(width, pixel_x, pixel_y)] += dpixel;
+
+            uint32_t *pixel_addr = &frame_buffer[coords2d_to_1d(width, pixel_x, pixel_y)];
+            uint32_t current = *pixel_addr;
+            uint32_t assumed = 0;
+            do {
+                assumed = current;
+                current = atomicCAS(
+                    (unsigned int*)pixel_addr, assumed,
+                    clamp(assumed + dpixel, 0u, 0x00FFFFFFu)
+                );
+            } while (assumed != current);
         }
     }
 }
