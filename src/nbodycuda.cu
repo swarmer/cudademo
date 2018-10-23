@@ -27,8 +27,8 @@ __device__ __host__ constexpr float particle_render_kernel(
 )
 {
     constexpr float max_value = 250;
-    float distance = std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2));
-    float value = 1 / std::pow(distance, 1.7) * max_value;
+    float sqdistance = powf(x1 - x2, 2) + powf(y1 - y2, 2);
+    float value = 1 / powf(sqdistance, 1.7 / 2) * max_value;
     return value;
 }
 
@@ -45,7 +45,7 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
     auto particle_generator = UniformRandomParticleGenerator{
         0.0f, (float)width,
         0.0f, (float)height,
-        1500u,
+        10000u,
     };
 
     vector<tuple<float, float, float, float>> particles = particle_generator.get_particles();
@@ -189,8 +189,8 @@ __global__ void cuda_accelerate(
     float sourcey = particle_y_arr[particle_source];
 
     constexpr float g = 0.001;
-    constexpr float maxaccel = 0.001;
-    float distance = std::sqrt(std::pow(sourcex - targetx, 2) + std::pow(sourcey - targety, 2));
+    constexpr float maxaccel = 0.01;
+    float distance = sqrtf(powf(sourcex - targetx, 2) + powf(sourcey - targety, 2));
     float accel = 1 / distance * g;
     float accelx = (sourcex - targetx) / distance * accel;
     float accely = (sourcey - targety) / distance * accel;
