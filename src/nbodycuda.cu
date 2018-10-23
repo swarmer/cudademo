@@ -176,8 +176,8 @@ __global__ void cuda_accelerate(
 )
 {
     // target is one being accelerated, source is one applying force
-    const size_t particle_target = blockIdx.x * 10 + threadIdx.x;
-    const size_t particle_source = blockIdx.y * 10 + threadIdx.y;
+    const size_t particle_target = blockIdx.x * 16 + threadIdx.x;
+    const size_t particle_source = blockIdx.y * 16 + threadIdx.y;
     if (particle_target >= particle_count || particle_source >= particle_count)
         return;
     if (particle_target == particle_source)
@@ -190,10 +190,11 @@ __global__ void cuda_accelerate(
 
     constexpr float g = 0.001;
     constexpr float maxaccel = 0.01;
-    float distance = sqrtf(powf(sourcex - targetx, 2) + powf(sourcey - targety, 2));
-    float accel = 1 / distance * g;
-    float accelx = (sourcex - targetx) / distance * accel;
-    float accely = (sourcey - targety) / distance * accel;
+    float dx = sourcex - targetx;
+    float dy = sourcey - targety;
+    float sqdistance = dx * dx + dy * dy;
+    float accelx = dx / sqdistance * g;
+    float accely = dy / sqdistance * g;
     accelx = clamp(accelx, -maxaccel, maxaccel);
     accely = clamp(accely, -maxaccel, maxaccel);
 
@@ -226,8 +227,8 @@ void NBodyRenderer::update_cuda()
     cudaMemset(frame_buffer, 0, m_width * m_height * sizeof(uint32_t));
 
     // accelerate particles
-    dim3 athreads_per_block(10, 10, 1);  // 10 particles x 10 particles
-    dim3 ablocks_count(ceil(particle_count / 10), ceil(particle_count / 10), 1);
+    dim3 athreads_per_block(16, 16, 1);  // 16 particles x 16 particles
+    dim3 ablocks_count(ceil((float)particle_count / 16), ceil((float)particle_count / 16), 1);
     cuda_accelerate<<<ablocks_count, athreads_per_block>>>(
         particle_x_arr, particle_y_arr,
         particle_x_speed, particle_y_speed,
@@ -236,7 +237,7 @@ void NBodyRenderer::update_cuda()
 
     // move particles
     dim3 mthreads_per_block(100, 1, 1);
-    dim3 mblocks_count(ceil(particle_count / 100), 1, 1);
+    dim3 mblocks_count(ceil((float)particle_count / 100), 1, 1);
     cuda_move<<<mblocks_count, mthreads_per_block>>>(
         particle_x_arr, particle_y_arr,
         particle_x_speed, particle_y_speed,
@@ -245,7 +246,7 @@ void NBodyRenderer::update_cuda()
 
     // render particles
     dim3 rthreads_per_block(5, 5, 10);  // 10 particles x 5 column blocks x 5 rows blocks
-    dim3 rblocks_count(ceil(particle_count / 10), 1, 1);
+    dim3 rblocks_count(ceil((float)particle_count / 10), 1, 1);
     cuda_render<<<rblocks_count, rthreads_per_block>>>(
         frame_buffer, m_width, m_height,
         particle_x_arr, particle_y_arr, particle_count
