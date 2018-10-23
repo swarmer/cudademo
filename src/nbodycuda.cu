@@ -45,7 +45,7 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
     auto particle_generator = UniformRandomParticleGenerator{
         0.0f, (float)width,
         0.0f, (float)height,
-        3000u,
+        1500u,
     };
 
     vector<tuple<float, float, float, float>> particles = particle_generator.get_particles();
@@ -190,8 +190,10 @@ __global__ void cuda_accelerate(
 
     constexpr float g = 0.001;
     constexpr float maxaccel = 0.001;
-    float accelx = 1 / (sourcex - targetx) * g;
-    float accely = 1 / (sourcey - targety) * g;
+    float distance = std::sqrt(std::pow(sourcex - targetx, 2) + std::pow(sourcey - targety, 2));
+    float accel = 1 / distance * g;
+    float accelx = (sourcex - targetx) / distance * accel;
+    float accely = (sourcey - targety) / distance * accel;
     accelx = clamp(accelx, -maxaccel, maxaccel);
     accely = clamp(accely, -maxaccel, maxaccel);
 
