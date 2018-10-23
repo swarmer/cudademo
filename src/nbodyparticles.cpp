@@ -24,8 +24,8 @@ vector<tuple<float, float, float, float>> UniformRandomParticleGenerator::get_pa
     std::mt19937 rng{random_device()};
     std::uniform_real_distribution<float> x_distr{x_from, x_to};
     std::uniform_real_distribution<float> y_distr{y_from, y_to};
-    std::uniform_real_distribution<float> speedx_distr{-1.0, 1.0};
-    std::uniform_real_distribution<float> speedy_distr{-1.0, 1.0};
+    std::uniform_real_distribution<float> speedx_distr{-0.0, 0.0};
+    std::uniform_real_distribution<float> speedy_distr{-0.0, 0.0};
 
     for (size_t i = 0; i < count; ++i) {
         float x = x_distr(rng);
