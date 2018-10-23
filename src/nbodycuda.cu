@@ -27,8 +27,8 @@ __device__ __host__ constexpr float particle_render_kernel(
 )
 {
     constexpr float max_value = 250;
-    float sqdistance = powf(x1 - x2, 2) + powf(y1 - y2, 2);
-    float value = 1 / powf(sqdistance, 1.7 / 2) * max_value;
+    const float sqdistance = powf(x1 - x2, 2) + powf(y1 - y2, 2);
+    const float value = 1 / powf(sqdistance, 1.7 / 2) * max_value;
     return value;
 }
 
@@ -45,7 +45,7 @@ NBodyRenderer::NBodyRenderer(size_t width, size_t height)
     auto particle_generator = UniformRandomParticleGenerator{
         0.0f, (float)width,
         0.0f, (float)height,
-        10000u,
+        15000u,
     };
 
     vector<tuple<float, float, float, float>> particles = particle_generator.get_particles();
@@ -119,8 +119,8 @@ void NBodyRenderer::update_software()
 __global__ void cuda_render(
         uint32_t frame_buffer[],
         size_t width, size_t height,
-        float particle_x_arr[],
-        float particle_y_arr[],
+        const float particle_x_arr[],
+        const float particle_y_arr[],
         size_t particle_count
 )
 {
@@ -168,8 +168,8 @@ __global__ void cuda_render(
 }
 
 __global__ void cuda_accelerate(
-    float particle_x_arr[],
-    float particle_y_arr[],
+    const float particle_x_arr[],
+    const float particle_y_arr[],
     float particle_x_speed[],
     float particle_y_speed[],
     size_t particle_count
@@ -183,23 +183,23 @@ __global__ void cuda_accelerate(
     if (particle_target == particle_source)
         return;
 
-    float targetx = particle_x_arr[particle_target];
-    float targety = particle_y_arr[particle_target];
-    float sourcex = particle_x_arr[particle_source];
-    float sourcey = particle_y_arr[particle_source];
+    const float targetx = particle_x_arr[particle_target];
+    const float targety = particle_y_arr[particle_target];
+    const float sourcex = particle_x_arr[particle_source];
+    const float sourcey = particle_y_arr[particle_source];
 
     constexpr float g = 0.001;
     constexpr float maxaccel = 0.01;
-    float dx = sourcex - targetx;
-    float dy = sourcey - targety;
-    float sqdistance = dx * dx + dy * dy;
+    const float dx = sourcex - targetx;
+    const float dy = sourcey - targety;
+    const float sqdistance = dx * dx + dy * dy;
     float accelx = dx / sqdistance * g;
     float accely = dy / sqdistance * g;
     accelx = clamp(accelx, -maxaccel, maxaccel);
     accely = clamp(accely, -maxaccel, maxaccel);
 
-    atomicAdd(&particle_x_speed[particle_target], accelx);
-    atomicAdd(&particle_y_speed[particle_target], accely);
+    particle_x_speed[particle_target] += accelx;
+    particle_y_speed[particle_target] += accely;
 }
 
 __global__ void cuda_move(
